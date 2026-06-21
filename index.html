@@ -246,6 +246,29 @@
   }
 
   .input-wrap input { padding-right: 52px; }
+  .input-wrap.has-clear input { padding-right: 36px; }
+  .input-wrap.has-clear.has-action input { padding-right: 52px; }
+
+  .input-wrap .clear-btn {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .input-wrap .clear-btn.show { display: flex; }
+  .input-wrap .clear-btn:hover { color: var(--red); background: rgba(247,84,84,0.1); }
 
   .input-wrap .random-btn {
     position: absolute;
@@ -296,6 +319,73 @@
   }
 
   select option { background: var(--surface3); }
+
+  .airport-combobox { position: relative; width: 100%; }
+
+  .airport-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    max-height: 240px;
+    overflow-y: auto;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    z-index: 200;
+    display: none;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+  }
+
+  .airport-dropdown.open { display: block; }
+
+  .airport-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: background 0.12s;
+    border-bottom: 1px solid rgba(42, 47, 69, 0.5);
+  }
+
+  .airport-option:last-child { border-bottom: none; }
+  .airport-option:hover, .airport-option.highlighted { background: rgba(79, 142, 247, 0.12); }
+
+  .airport-option-code {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 36px;
+  }
+
+  .airport-option-info { flex: 1; min-width: 0; }
+
+  .airport-option-city {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .airport-option-name {
+    font-size: 10px;
+    color: var(--text-mid);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 1px;
+  }
+
+  .airport-empty {
+    padding: 14px 12px;
+    font-size: 12px;
+    color: var(--text-dim);
+    text-align: center;
+  }
 
   .route-divider {
     display: flex;
@@ -406,6 +496,19 @@
     font-family: 'Space Mono', monospace;
     color: var(--accent);
     flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .flight-airline--logo {
+    background: #fff;
+    padding: 3px;
+  }
+
+  .flight-airline img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
   }
 
   .flight-details { flex: 1; min-width: 0; }
@@ -941,11 +1044,17 @@
         <div class="form-row">
           <div class="field-group">
             <label>First Name</label>
-            <input id="firstNameEd" type="text" value="Gaurav" oninput="format()">
+            <div class="input-wrap has-clear">
+              <input id="firstNameEd" type="text" value="Gaurav" oninput="onNameInput()">
+              <button class="clear-btn show" type="button" onclick="clearNameField('firstNameEd')" aria-label="Clear first name">×</button>
+            </div>
           </div>
           <div class="field-group">
             <label>Last Name</label>
-            <input id="lastNameEd" type="text" value="Agarwal" oninput="format()">
+            <div class="input-wrap has-clear">
+              <input id="lastNameEd" type="text" value="Agarwal" oninput="onNameInput()">
+              <button class="clear-btn show" type="button" onclick="clearNameField('lastNameEd')" aria-label="Clear last name">×</button>
+            </div>
           </div>
         </div>
         <div class="form-row form-row-flex">
@@ -979,17 +1088,22 @@
         <div class="form-row form-row-flex" style="align-items:end">
           <div class="field-group">
             <label>From (IATA)</label>
-            <input id="fromEd" type="text" value="BOM" oninput="format()" maxlength="3" list="airportList">
+            <div class="airport-combobox" id="fromCombo">
+              <input id="fromEd" type="text" value="BOM" autocomplete="off" placeholder="Search airport…">
+              <div class="airport-dropdown" id="fromDropdown"></div>
+            </div>
           </div>
           <div class="route-divider" style="margin-bottom:10px">
             <div class="route-arrow">→</div>
           </div>
           <div class="field-group">
             <label>To (IATA)</label>
-            <input id="toEd" type="text" value="DEL" oninput="format()" maxlength="3" list="airportList">
+            <div class="airport-combobox" id="toCombo">
+              <input id="toEd" type="text" value="DEL" autocomplete="off" placeholder="Search airport…">
+              <div class="airport-dropdown" id="toDropdown"></div>
+            </div>
           </div>
         </div>
-        <datalist id="airportList"></datalist>
         <div class="form-row">
           <div class="field-group">
             <label>Airline Code</label>
@@ -1015,7 +1129,7 @@
         </div>
 
         <div id="flightSuggestions" style="display:none; margin-top:4px">
-          <div class="section-label" style="margin-bottom:8px">✦ Suggested flights in next 3–4 hrs</div>
+          <div class="section-label" style="margin-bottom:8px">✦ Suggested flights · departing in 1–4 hrs</div>
           <div class="flight-list" id="flightList"></div>
         </div>
       </div>
@@ -1037,9 +1151,9 @@
     <div>
       <div class="section-label">Barcode Format</div>
       <div class="options-row">
-        <div class="option-chip active" id="chip-code128" onclick="setBarcodeType('CODE128', this)">▦ CODE128</div>
+        <div class="option-chip" id="chip-code128" onclick="setBarcodeType('CODE128', this)">▦ CODE128</div>
         <div class="option-chip" id="chip-pdf417" onclick="setBarcodeType('PDF417', this)">▤ PDF417-style</div>
-        <div class="option-chip" id="chip-qr" onclick="setBarcodeType('QR', this)">⊞ QR Code</div>
+        <div class="option-chip active" id="chip-qr" onclick="setBarcodeType('QR', this)">⊞ QR Code</div>
       </div>
     </div>
 
@@ -1126,9 +1240,9 @@
         </div>
 
         <div class="pass-barcode-section">
-          <svg id="barcode-svg" style="width:100%;max-height:100px"></svg>
-          <div id="qr-canvas-wrap" style="display:none"></div>
-          <div class="pass-raw-label" id="rawLabel">IATA BCBP · CODE128</div>
+          <svg id="barcode-svg" style="width:100%;max-height:100px;display:none"></svg>
+          <div id="qr-canvas-wrap" style="display:flex"></div>
+          <div class="pass-raw-label" id="rawLabel">IATA BCBP · QR CODE</div>
         </div>
       </div>
     </div>
@@ -1270,26 +1384,183 @@ const airports = [
 ];
 
 const cityNames = Object.fromEntries(airports.map(a => [a.code, a.city]));
+const airportCodes = new Set(airports.map(a => a.code));
 const airlineNames = {
   AI: 'AIR INDIA', UK: 'VISTARA', SG: 'SPICEJET', '6E': 'INDIGO', G8: 'GO FIRST',
-  IX: 'AIR ASIA INDIA', QP: 'AKASA AIR', BA: 'BRITISH AIRWAYS', EK: 'EMIRATES',
-  UA: 'UNITED', AA: 'AMERICAN', DL: 'DELTA', LH: 'LUFTHANSA', SQ: 'SINGAPORE AIR',
-  QF: 'QANTAS', AF: 'AIR FRANCE'
+  IX: 'AIR INDIA EXPRESS', IXE: 'AIR INDIA EXPRESS', QP: 'AKASA AIR'
 };
+const airlineCodes = new Set(Object.keys(airlineNames));
+const airlineLogos = {
+  AI: 'logos/air_india.svg',
+  UK: 'logos/vistara.svg',
+  SG: 'logos/spicejet.svg',
+  '6E': 'logos/indigo.svg',
+  IX: 'logos/air_asia.png',
+  IXE: 'logos/air_india_express.svg',
+  QP: 'logos/akasa.svg'
+};
+
+function airlineBadgeHtml(code) {
+  const logo = airlineLogos[code];
+  if (logo) {
+    return `<div class="flight-airline flight-airline--logo"><img src="${logo}" alt="${code}"></div>`;
+  }
+  return `<div class="flight-airline">${code}</div>`;
+}
+
+function bindAirlineLogoFallbacks(container) {
+  container.querySelectorAll('.flight-airline img').forEach(img => {
+    img.onerror = () => {
+      const el = img.parentElement;
+      el.classList.remove('flight-airline--logo');
+      el.textContent = img.alt;
+    };
+  });
+}
+
 const classLabels = { F: 'FIRST CLASS', C: 'BUSINESS CLASS', Y: 'ECONOMY' };
 const FLD_PAD = { bookRef: 7, from: 3, to: 3, fOp: 3, fNum: 5 };
 
-function populateAirportList() {
-  const dl = $('airportList');
-  if (!dl) return;
-  dl.innerHTML = airports.map(a =>
-    `<option value="${a.code}" label="${a.city} (${a.code})">`
+function clearNameField(id) {
+  const input = $(id);
+  input.value = '';
+  input.focus();
+  updateClearBtn(input);
+  format();
+}
+
+function updateClearBtn(input) {
+  const btn = input.parentElement?.querySelector('.clear-btn');
+  if (btn) btn.classList.toggle('show', input.value.length > 0);
+}
+
+function onNameInput() {
+  updateClearBtn($('firstNameEd'));
+  updateClearBtn($('lastNameEd'));
+  format();
+}
+
+function filterAirports(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return airports;
+  return airports.filter(a =>
+    a.code.toLowerCase().includes(q) ||
+    a.city.toLowerCase().includes(q) ||
+    a.name.toLowerCase().includes(q)
+  );
+}
+
+function renderAirportOptions(dropdown, list, highlightIdx) {
+  if (!list.length) {
+    dropdown.innerHTML = '<div class="airport-empty">No airports found</div>';
+    return;
+  }
+  dropdown.innerHTML = list.map((a, i) =>
+    `<div class="airport-option${i === highlightIdx ? ' highlighted' : ''}" data-code="${a.code}">
+      <div class="airport-option-code">${a.code}</div>
+      <div class="airport-option-info">
+        <div class="airport-option-city">${a.city}</div>
+        <div class="airport-option-name">${a.name}</div>
+      </div>
+    </div>`
   ).join('');
+}
+
+function initAirportCombobox(inputId, dropdownId, onChange) {
+  const input = $(inputId);
+  const dropdown = $(dropdownId);
+  let highlightIdx = 0;
+  let suppressBlur = false;
+
+  function openDropdown() {
+    const list = filterAirports(input.value);
+    highlightIdx = 0;
+    renderAirportOptions(dropdown, list, highlightIdx);
+    dropdown.classList.add('open');
+  }
+
+  function closeDropdown() {
+    dropdown.classList.remove('open');
+  }
+
+  function selectCode(code) {
+    input.value = code;
+    closeDropdown();
+    onChange?.(code);
+    format();
+  }
+
+  function commitTypedValue() {
+    const code = input.value.toUpperCase().trim().slice(0, 3);
+    const match = airports.find(a => a.code === code);
+    if (match) {
+      input.value = match.code;
+      onChange?.(match.code);
+    }
+    format();
+  }
+
+  input.addEventListener('focus', openDropdown);
+  input.addEventListener('click', openDropdown);
+  input.addEventListener('input', openDropdown);
+  input.addEventListener('blur', () => {
+    if (suppressBlur) return;
+    setTimeout(() => {
+      closeDropdown();
+      commitTypedValue();
+    }, 150);
+  });
+  input.addEventListener('keydown', e => {
+    const options = dropdown.querySelectorAll('.airport-option');
+    if (!dropdown.classList.contains('open')) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') openDropdown();
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      highlightIdx = Math.min(highlightIdx + 1, options.length - 1);
+      options.forEach((o, i) => o.classList.toggle('highlighted', i === highlightIdx));
+      options[highlightIdx]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      highlightIdx = Math.max(highlightIdx - 1, 0);
+      options.forEach((o, i) => o.classList.toggle('highlighted', i === highlightIdx));
+      options[highlightIdx]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const opt = options[highlightIdx];
+      if (opt) selectCode(opt.dataset.code);
+      else commitTypedValue();
+      closeDropdown();
+    } else if (e.key === 'Escape') {
+      closeDropdown();
+    }
+  });
+
+  dropdown.addEventListener('mousedown', e => {
+    suppressBlur = true;
+    const opt = e.target.closest('.airport-option');
+    if (opt) selectCode(opt.dataset.code);
+    setTimeout(() => { suppressBlur = false; }, 0);
+  });
+
+  document.addEventListener('click', e => {
+    if (!input.contains(e.target) && !dropdown.contains(e.target)) closeDropdown();
+  });
+}
+
+let fromAirportCode = 'BOM';
+
+function onFromAirportChange(code) {
+  if (code === fromAirportCode) return;
+  fromAirportCode = code;
+  $('fromEd').classList.remove('auto-filled');
+  loadFlightSuggestions(code);
 }
 
 const fields = {};
 let selectedClass = 'Y';
-let barcodeType = 'CODE128';
+let barcodeType = 'QR';
 
 function pad(s, n, ch, right) {
   s = s.toString().toUpperCase();
@@ -1494,6 +1765,8 @@ function saveCurrentPassenger() {
 function applyPassenger(first, last) {
   $('firstNameEd').value = first;
   $('lastNameEd').value = last;
+  updateClearBtn($('firstNameEd'));
+  updateClearBtn($('lastNameEd'));
   format();
   showStatus('success', '✓ Loaded passenger: ' + first + ' ' + last);
 }
@@ -1532,11 +1805,24 @@ function nearestAirport(lat, lng) {
   return { airport: best, dist: Math.round(bestDist) };
 }
 
-function applyAirport(airport, dist, isFallback) {
+async function reverseGeocode(lat, lng) {
+  const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('geocode failed');
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+function applyAirport(airport, dist, isFallback, geoLabel) {
   const fromInput = $('fromEd');
   fromInput.value = airport.code;
   fromInput.classList.add('auto-filled');
-  $('locTitle').textContent = airport.city + ' — ' + airport.code + (isFallback ? ' (estimated)' : '');
+  fromAirportCode = airport.code;
+  const title = geoLabel || (airport.city + ' — ' + airport.code);
+  $('locTitle').textContent = title + (isFallback ? ' (estimated)' : '');
   $('locSub').textContent = isFallback ? airport.name : airport.name + ' (' + dist + ' km)';
   $('detectBtn').style.display = 'none';
   const reBtn = $('redetectBtn');
@@ -1570,14 +1856,22 @@ function detectLocation() {
   }
 
   navigator.geolocation.getCurrentPosition(
-    pos => {
-      const { airport, dist } = nearestAirport(pos.coords.latitude, pos.coords.longitude);
-      applyAirport(airport, dist, false);
+    async pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const geo = await reverseGeocode(lat, lng);
+      const { airport, dist } = nearestAirport(lat, lng);
+      const geoLabel = geo?.city
+        ? geo.city + ' — ' + airport.code
+        : airport.city + ' — ' + airport.code;
+      applyAirport(airport, dist, false, geoLabel);
+      resetDetectBtn(activeBtn, originalText);
       showStatus('success', '✓ Found: ' + airport.name + ' (' + airport.code + ') — ' + dist + 'km away');
     },
     () => {
       const ap = airports.find(a => a.code === 'BOM');
       applyAirport(ap, 0, true);
+      resetDetectBtn(activeBtn, originalText);
       showStatus('info', '⚠ Location blocked — defaulted to Mumbai (BOM)');
     },
     { timeout: 15000, enableHighAccuracy: false, maximumAge: 300000 }
@@ -1633,10 +1927,12 @@ function mapFlightStatsFlight(f, fromCode) {
   };
 }
 
-function pickFlights(flights, fromCode, now, windowEnd) {
+function pickFlights(flights, fromCode, minTime, windowEnd) {
   const seen = new Set();
   const eligible = flights.filter(f => {
     if (f.isCodeshare || !f.carrier?.fs || !f.airport?.fs) return false;
+    if (!airportCodes.has(f.airport.fs)) return false;
+    if (!airlineCodes.has(f.carrier.fs)) return false;
     const key = f.carrier.fs + f.carrier.flightNumber + f.sortTime;
     if (seen.has(key)) return false;
     seen.add(key);
@@ -1645,16 +1941,18 @@ function pickFlights(flights, fromCode, now, windowEnd) {
 
   const inWindow = eligible.filter(f => {
     const t = new Date(f.sortTime).getTime();
-    return t >= now - 600000 && t <= windowEnd;
+    return t >= minTime && t <= windowEnd;
   });
 
-  const picks = (inWindow.length ? inWindow : eligible.filter(f => new Date(f.sortTime) >= now - 600000)).slice(0, 4);
+  const picks = (inWindow.length ? inWindow : eligible.filter(f => new Date(f.sortTime).getTime() >= minTime)).slice(0, 4);
   return picks.map(f => mapFlightStatsFlight(f, fromCode));
 }
 
 function filterUpcomingFlights(flights, fromCode) {
   const now = Date.now();
-  return pickFlights(flights, fromCode, now, now + 4 * 3600000);
+  const minTime = now + 60 * 60000;
+  const maxTime = now + 4 * 3600000;
+  return pickFlights(flights, fromCode, minTime, maxTime);
 }
 
 async function fetchFlightStatsDepartures(fromCode) {
@@ -1681,9 +1979,9 @@ function getStaticFlights(from) {
   };
   const candidates = airports.filter(a => a.code !== from);
   const picks = candidates.sort(() => Math.random() - 0.5).slice(0, 4);
-  const airlines = ['6E', 'AI', 'SG', 'UK', 'QP', 'G8'];
+  const airlines = [...airlineCodes];
   return picks.map((dest, i) => {
-    const depMin = 45 + i * 35 + Math.floor(Math.random() * 20);
+    const depMin = 65 + i * 25 + Math.floor(Math.random() * 25);
     const dur = 70 + Math.floor(Math.random() * 90);
     return {
       airline: airlines[Math.floor(Math.random() * airlines.length)],
@@ -1717,18 +2015,20 @@ async function loadFlightSuggestions(fromCode) {
 }
 
 function renderFlightList(flights) {
-  $('flightList').innerHTML = flights.map(f =>
+  const list = $('flightList');
+  list.innerHTML = flights.map(f =>
     `<div class="flight-item" data-flight='${JSON.stringify(f).replace(/'/g, '&#39;')}'>
-      <div class="flight-airline">${f.airline}</div>
+      ${airlineBadgeHtml(f.airline)}
       <div class="flight-details">
         <div class="flight-route">${f.from} → ${f.to}</div>
-        <div class="flight-meta">${airlineNames[f.airline] || f.airline} · Flt ${f.airline}${f.flightNum} · ${cityNames[f.to] || ''}</div>
+        <div class="flight-meta">${airlineNames[f.airline] || f.airline} · ${f.airline} ${f.flightNum} · ${cityNames[f.to] || ''}</div>
       </div>
       <div class="flight-time"><div>${f.dep}</div><div style="font-size:10px;color:var(--text-dim)">${f.arr}</div></div>
     </div>`
   ).join('');
 
-  $('flightList').querySelectorAll('.flight-item').forEach(item => {
+  bindAirlineLogoFallbacks(list);
+  list.querySelectorAll('.flight-item').forEach(item => {
     item.onclick = () => applyFlight(JSON.parse(item.dataset.flight), item);
   });
 }
@@ -1736,6 +2036,7 @@ function renderFlightList(flights) {
 function applyFlight(f, el) {
   document.querySelectorAll('.flight-item').forEach(i => i.classList.remove('selected'));
   el.classList.add('selected');
+  fromAirportCode = f.from;
   $('fromEd').value = f.from;
   $('toEd').value = f.to;
   $('fOpEd').value = f.airline;
@@ -1778,7 +2079,8 @@ function hideLoader() {
 
 function start() {
   setupPWA();
-  populateAirportList();
+  initAirportCombobox('fromEd', 'fromDropdown', onFromAirportChange);
+  initAirportCombobox('toEd', 'toDropdown');
   $('dateEd').value = new Date().toISOString().slice(0, 10);
   const now = Date.now();
   $('passDep').textContent = fmtTime(new Date(now + 90 * 60000));
