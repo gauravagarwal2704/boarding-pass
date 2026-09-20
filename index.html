@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <title>BoardingPass Studio</title>
 <meta name="description" content="Generate IATA BCBP boarding pass barcodes for educational use">
 <meta name="theme-color" content="#0a0b0f">
@@ -571,7 +571,8 @@
 
   @media (prefers-reduced-motion: reduce) {
     .time-picker-backdrop, .time-picker-card, .clock-hand, .clock-number,
-    .airport-drawer-backdrop, .airport-drawer-panel, .range-select-menu { transition: none !important; animation: none !important; }
+    .airport-drawer-backdrop, .airport-drawer-panel, .range-select-menu,
+    .route-arrow, .route-arrow svg { transition: none !important; animation: none !important; }
   }
 
   .time-picker-actions {
@@ -755,7 +756,8 @@
 
   .airport-drawer-panel {
     width: min(620px, 100%);
-    max-height: min(78vh, 720px);
+    max-height: min(78vh, 720px, calc(var(--airport-visible-height, 100dvh) - 8px));
+    margin-bottom: var(--airport-keyboard-inset, 0px);
     display: flex;
     flex-direction: column;
     padding: 8px 0 max(12px, var(--safe-bottom));
@@ -782,6 +784,7 @@
     display: grid;
     grid-template-columns: 42px 1fr 42px;
     align-items: center;
+    flex-shrink: 0;
     padding: 8px 20px 14px;
     border-bottom: 1px solid var(--border);
   }
@@ -805,6 +808,7 @@
 
   .airport-search-wrap {
     position: relative;
+    flex-shrink: 0;
     margin: 16px 20px 10px;
   }
 
@@ -831,7 +835,11 @@
   }
 
   .airport-drawer-list {
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     padding: 0 12px;
   }
 
@@ -891,14 +899,40 @@
   }
 
   .route-arrow {
-    width: 28px; height: 28px;
+    width: 36px; height: 36px;
+    padding: 0;
     background: var(--surface3);
     border: 1px solid var(--border);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 13px;
     color: var(--accent);
     flex-shrink: 0;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  }
+
+  .route-arrow:hover, .route-arrow:focus-visible {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+    outline: none;
+  }
+
+  .route-arrow:active { transform: scale(0.92); }
+  .route-arrow svg {
+    width: 19px; height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .route-arrow.swap-active svg { animation: swapRoute 0.32s ease; }
+
+  @keyframes swapRoute {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(180deg); }
   }
 
   .passenger-pills {
@@ -1661,7 +1695,11 @@
             </button>
           </div>
           <div class="route-divider" style="margin-bottom:10px">
-            <div class="route-arrow">→</div>
+            <button class="route-arrow" id="swapAirportsBtn" type="button" onclick="swapAirports()" aria-label="Swap departure and destination airports" title="Swap airports">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 7h13m0 0-3.5-3.5M18 7l-3.5 3.5M19 17H6m0 0 3.5-3.5M6 17l3.5 3.5"></path>
+              </svg>
+            </button>
           </div>
           <div class="field-group">
             <label>To (IATA)</label>
@@ -2154,6 +2192,26 @@ function updateAirportTriggers() {
   }
 }
 
+function updateAirportDrawerViewport() {
+  const drawer = $('airportDrawer');
+  if (!drawer?.classList.contains('open')) return;
+
+  const viewport = window.visualViewport;
+  const visibleHeight = viewport?.height || window.innerHeight;
+  const obscuredHeight = viewport
+    ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
+    : 0;
+  // Ignore small differences caused by collapsing browser chrome. A larger
+  // inset means the software keyboard is covering the layout viewport.
+  const keyboardInset = obscuredHeight > 80 ? obscuredHeight : 0;
+  drawer.style.setProperty('--airport-visible-height', `${Math.round(visibleHeight)}px`);
+  drawer.style.setProperty('--airport-keyboard-inset', `${Math.round(keyboardInset)}px`);
+}
+
+window.visualViewport?.addEventListener('resize', updateAirportDrawerViewport);
+window.visualViewport?.addEventListener('scroll', updateAirportDrawerViewport);
+window.addEventListener('resize', updateAirportDrawerViewport);
+
 function openAirportDrawer(field) {
   airportDrawerField = field === 'to' ? 'to' : 'from';
   airportDrawerReturnFocus = document.activeElement;
@@ -2164,11 +2222,15 @@ function openAirportDrawer(field) {
   renderAirportDrawerList('');
   $('airportDrawer').classList.add('open');
   document.body.style.overflow = 'hidden';
+  updateAirportDrawerViewport();
   setTimeout(() => $('airportSearchInput').focus(), 220);
 }
 
 function closeAirportDrawer() {
-  $('airportDrawer').classList.remove('open');
+  const drawer = $('airportDrawer');
+  drawer.classList.remove('open');
+  drawer.style.removeProperty('--airport-visible-height');
+  drawer.style.removeProperty('--airport-keyboard-inset');
   document.body.style.overflow = '';
   airportDrawerReturnFocus?.focus();
 }
@@ -2224,6 +2286,30 @@ function onToAirportChange(code) {
   if (code === toAirportCode) return;
   toAirportCode = code;
   scheduleFlightSuggestionsReload();
+}
+
+function swapAirports() {
+  const nextFrom = $('toEd').value;
+  const nextTo = $('fromEd').value;
+  if (!nextFrom || !nextTo) return;
+
+  clearTimeout(flightReloadTimer);
+  $('fromEd').value = nextFrom;
+  $('toEd').value = nextTo;
+  fromAirportCode = nextFrom;
+  toAirportCode = nextTo;
+  updateAirportTriggers();
+  format();
+
+  const button = $('swapAirportsBtn');
+  button.classList.remove('swap-active');
+  void button.offsetWidth;
+  button.classList.add('swap-active');
+  setTimeout(() => button.classList.remove('swap-active'), 320);
+
+  if (domesticAirportCodes.has(fromAirportCode) && domesticAirportCodes.has(toAirportCode)) {
+    loadFlightSuggestions(fromAirportCode, toAirportCode);
+  }
 }
 
 function scheduleFlightSuggestionsReload() {
@@ -2796,6 +2882,115 @@ const CORS_PROXIES = [
   url => 'https://proxy.killcors.com?url=' + encodeURIComponent(url),
 ];
 
+const FLIGHT_CACHE_DB = 'boarding-pass-studio';
+const FLIGHT_CACHE_VERSION = 1;
+const FLIGHT_CACHE_STORE = 'flightstats-departure-blocks';
+const FLIGHT_CACHE_TODAY_TTL = 5 * 60 * 1000;
+const FLIGHT_CACHE_FUTURE_TTL = 6 * 60 * 60 * 1000;
+const inFlightFlightBlocks = new Map();
+let flightCacheDbPromise = null;
+let flightCacheLastPrunedDate = '';
+
+function formatDateKey({ year, month, day }) {
+  return [year, String(month).padStart(2, '0'), String(day).padStart(2, '0')].join('-');
+}
+
+function getTodayISTKey() {
+  return formatDateKey(getISTParts());
+}
+
+function getFlightBlockKey(fromCode, block) {
+  return `${fromCode}|${formatDateKey(block)}|${String(block.startHour).padStart(2, '0')}`;
+}
+
+function openFlightCacheDb() {
+  if (!('indexedDB' in window)) return Promise.resolve(null);
+  if (flightCacheDbPromise) return flightCacheDbPromise;
+
+  flightCacheDbPromise = new Promise(resolve => {
+    const request = indexedDB.open(FLIGHT_CACHE_DB, FLIGHT_CACHE_VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(FLIGHT_CACHE_STORE)) {
+        const store = db.createObjectStore(FLIGHT_CACHE_STORE, { keyPath: 'key' });
+        store.createIndex('serviceDate', 'serviceDate', { unique: false });
+        store.createIndex('expiresAt', 'expiresAt', { unique: false });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => resolve(null);
+    request.onblocked = () => resolve(null);
+  });
+  return flightCacheDbPromise;
+}
+
+async function readFlightCacheRecord(key) {
+  const db = await openFlightCacheDb();
+  if (!db) return null;
+  return new Promise(resolve => {
+    try {
+      const request = db.transaction(FLIGHT_CACHE_STORE, 'readonly').objectStore(FLIGHT_CACHE_STORE).get(key);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+async function writeFlightCacheRecord(record) {
+  const db = await openFlightCacheDb();
+  if (!db) return;
+  await new Promise(resolve => {
+    try {
+      const transaction = db.transaction(FLIGHT_CACHE_STORE, 'readwrite');
+      transaction.objectStore(FLIGHT_CACHE_STORE).put(record);
+      transaction.oncomplete = transaction.onerror = transaction.onabort = () => resolve();
+    } catch {
+      resolve();
+    }
+  });
+}
+
+async function deleteFlightCacheRecord(key) {
+  const db = await openFlightCacheDb();
+  if (!db) return;
+  await new Promise(resolve => {
+    try {
+      const transaction = db.transaction(FLIGHT_CACHE_STORE, 'readwrite');
+      transaction.objectStore(FLIGHT_CACHE_STORE).delete(key);
+      transaction.oncomplete = transaction.onerror = transaction.onabort = () => resolve();
+    } catch {
+      resolve();
+    }
+  });
+}
+
+async function pruneFlightCache() {
+  const today = getTodayISTKey();
+  if (flightCacheLastPrunedDate === today) return;
+  const db = await openFlightCacheDb();
+  if (!db) return;
+  await new Promise(resolve => {
+    try {
+      const transaction = db.transaction(FLIGHT_CACHE_STORE, 'readwrite');
+      const request = transaction.objectStore(FLIGHT_CACHE_STORE).openCursor();
+      const now = Date.now();
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (!cursor) return;
+        const record = cursor.value;
+        if (record.serviceDate < today || record.expiresAt <= now) cursor.delete();
+        cursor.continue();
+      };
+      transaction.oncomplete = transaction.onerror = transaction.onabort = () => resolve();
+    } catch {
+      resolve();
+    }
+  });
+  flightCacheLastPrunedDate = today;
+}
+
 async function fetchFlightStatsJson(url) {
   let lastErr;
   for (const wrap of CORS_PROXIES) {
@@ -2810,6 +3005,54 @@ async function fetchFlightStatsJson(url) {
     }
   }
   throw lastErr || new Error('all proxies failed');
+}
+
+async function fetchFlightStatsBlock(fromCode, block, { forceRefresh = false } = {}) {
+  const key = getFlightBlockKey(fromCode, block);
+  const serviceDate = formatDateKey(block);
+  const now = Date.now();
+
+  if (!forceRefresh) {
+    const cached = await readFlightCacheRecord(key);
+    if (cached?.expiresAt > now && Array.isArray(cached.flights)) {
+      return { flights: cached.flights, fromCache: true };
+    }
+    if (cached) await deleteFlightCacheRecord(key);
+  }
+
+  if (inFlightFlightBlocks.has(key)) return inFlightFlightBlocks.get(key);
+
+  const request = (async () => {
+    const base = 'https://www.flightstats.com/v2/api-next/flight-tracker/dep';
+    const url = `${base}/${fromCode}/${block.year}/${block.month}/${block.day}/${block.startHour}`;
+    const json = await fetchFlightStatsJson(url);
+    const flights = json?.data?.flights || [];
+    const today = getTodayISTKey();
+
+    // Past departures are never persisted. Today's schedule changes more often,
+    // while future schedules can safely use a longer cache window.
+    if (serviceDate >= today) {
+      const ttl = serviceDate === today ? FLIGHT_CACHE_TODAY_TTL : FLIGHT_CACHE_FUTURE_TTL;
+      await writeFlightCacheRecord({
+        key,
+        fromCode,
+        serviceDate,
+        startHour: block.startHour,
+        fetchedAt: now,
+        expiresAt: now + ttl,
+        flights
+      });
+    }
+
+    return { flights, fromCache: false };
+  })();
+
+  inFlightFlightBlocks.set(key, request);
+  try {
+    return await request;
+  } finally {
+    inFlightFlightBlocks.delete(key);
+  }
 }
 
 function mapFlightStatsFlight(f, fromCode) {
@@ -2848,19 +3091,21 @@ function filterUpcomingFlights(flights, fromCode, toCode, searchWindow) {
   return pickFlights(flights, fromCode, toCode, searchWindow.startTime, searchWindow.endTime);
 }
 
-async function fetchFlightStatsDepartures(fromCode, toCode, searchWindow) {
+async function fetchFlightStatsDepartures(fromCode, toCode, searchWindow, { forceRefresh = false } = {}) {
+  await pruneFlightCache();
   const blocks = flightStatsRequestBlocks(searchWindow.startTime, searchWindow.endTime);
-  const base = 'https://www.flightstats.com/v2/api-next/flight-tracker/dep';
-  const all = [];
-
-  for (const { year, month, day, startHour } of blocks) {
-    const url = `${base}/${fromCode}/${year}/${month}/${day}/${startHour}`;
-    const json = await fetchFlightStatsJson(url);
-    all.push(...(json?.data?.flights || []));
-  }
+  const blockResults = await Promise.all(
+    blocks.map(block => fetchFlightStatsBlock(fromCode, block, { forceRefresh }))
+  );
+  const all = blockResults.flatMap(result => result.flights);
 
   const upcoming = filterUpcomingFlights(all, fromCode, toCode, searchWindow);
-  return upcoming.length ? upcoming : null;
+  return {
+    flights: upcoming.length ? upcoming : null,
+    cacheHits: blockResults.filter(result => result.fromCache).length,
+    networkFetches: blockResults.filter(result => !result.fromCache).length,
+    totalBlocks: blockResults.length
+  };
 }
 
 function getStaticFlights(from, to, searchWindow) {
@@ -2898,10 +3143,10 @@ function setFlightFetchError(error) {
 }
 
 function retryFlightSuggestions() {
-  loadFlightSuggestions(fromAirportCode, toAirportCode);
+  loadFlightSuggestions(fromAirportCode, toAirportCode, { forceRefresh: true });
 }
 
-async function loadFlightSuggestions(fromCode, toCode) {
+async function loadFlightSuggestions(fromCode, toCode, { forceRefresh = false } = {}) {
   const requestId = ++flightSuggestionsRequestId;
   const routeLabel = toCode ? `${fromCode} → ${toCode}` : `from ${fromCode}`;
   const searchWindow = getFlightSearchWindow();
@@ -2919,7 +3164,7 @@ async function loadFlightSuggestions(fromCode, toCode) {
   $('flightList').innerHTML =
     '<div style="color:var(--text-dim);font-size:12px;padding:10px;text-align:center">' +
     '<span class="spinner" style="border-color:rgba(79,142,247,0.3);border-top-color:var(--accent)"></span>' +
-    '&nbsp; Loading live flights for ' + routeLabel + '...</div>';
+    `&nbsp; ${forceRefresh ? 'Refreshing' : 'Loading'} live flights for ${routeLabel}...</div>`;
 
   if (location.protocol === 'file:') {
     renderFlightList(getStaticFlights(fromCode, toCode, searchWindow));
@@ -2929,12 +3174,19 @@ async function loadFlightSuggestions(fromCode, toCode) {
   }
 
   try {
-    const flights = await fetchFlightStatsDepartures(fromCode, toCode, searchWindow);
+    const result = await fetchFlightStatsDepartures(fromCode, toCode, searchWindow, { forceRefresh });
     if (requestId !== flightSuggestionsRequestId) return;
+    const flights = result.flights;
     retryBtn.disabled = false;
     renderFlightList(flights || getStaticFlights(fromCode, toCode, searchWindow));
     if (flights) {
-      showStatus('success', `✓ Live flights loaded from FlightStats for ${routeLabel}`);
+      if (result.networkFetches === 0) {
+        showStatus('success', `✓ Live flights loaded from browser cache for ${routeLabel}`);
+      } else if (result.cacheHits > 0) {
+        showStatus('success', `✓ Live flights loaded from FlightStats + cache for ${routeLabel}`);
+      } else {
+        showStatus('success', `✓ Live flights loaded from FlightStats for ${routeLabel}`);
+      }
     } else {
       showStatus('info', `⚠ No live flights found for ${routeLabel} — showing estimates`);
     }
