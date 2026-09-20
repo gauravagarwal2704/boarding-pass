@@ -11,12 +11,17 @@
 <meta name="apple-mobile-web-app-title" content="BoardingPass">
 <link id="manifestLink" rel="manifest">
 <link id="appleIcon" rel="apple-touch-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
 
   :root {
+    color-scheme: dark;
+    --app-font: 'Outfit', sans-serif;
     --bg: #0a0b0f;
     --surface: #111318;
     --surface2: #1a1d26;
@@ -40,12 +45,28 @@
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
 
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #eef3f9;
+    --surface: #ffffff;
+    --surface2: #f7f9fc;
+    --surface3: #eaf0f7;
+    --border: #d4deea;
+    --accent: #246fe5;
+    --accent2: #6847e8;
+    --accent-glow: rgba(36, 111, 229, 0.16);
+    --text: #172033;
+    --text-dim: #64748b;
+    --text-mid: #475569;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
   html { -webkit-text-size-adjust: 100%; }
 
   body {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--app-font);
+    font-optical-sizing: auto;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
@@ -82,6 +103,16 @@
     flex-shrink: 0;
   }
 
+  .logo-icon svg {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: white;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
   .header-badge {
     font-size: 10px;
     background: var(--surface3);
@@ -104,12 +135,39 @@
     padding: 7px 12px;
     font-size: 11px;
     font-weight: 600;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--app-font);
     cursor: pointer;
     white-space: nowrap;
   }
 
   .install-btn.show { display: flex; }
+
+  .theme-toggle {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface3);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: border-color 0.2s, background 0.2s, transform 0.2s;
+  }
+
+  .theme-toggle:hover { border-color: var(--accent); }
+  .theme-toggle:active { transform: scale(0.94); }
+  :root[data-theme="dark"] .theme-toggle { color: #ffd166; }
+  :root[data-theme="light"] .theme-toggle { color: #4f46e5; }
+
+  .theme-toggle svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+    stroke: currentColor;
+  }
 
   .main-grid {
     display: grid;
@@ -191,7 +249,7 @@
     padding: 8px 14px;
     font-size: 12px;
     font-weight: 600;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--app-font);
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
@@ -209,7 +267,7 @@
     padding: 6px 14px;
     font-size: 11px;
     font-weight: 600;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--app-font);
     cursor: pointer;
     transition: all 0.2s;
     display: none;
@@ -245,6 +303,299 @@
     width: 100%;
   }
 
+  .time-input-wrap { position: relative; }
+  .time-input-wrap input { padding-right: 38px; cursor: pointer; }
+  .time-input-wrap svg {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    width: 17px;
+    height: 17px;
+    transform: translateY(-50%);
+    fill: none;
+    stroke: var(--text-mid);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
+
+  .range-select { position: relative; }
+
+  .range-select-trigger {
+    width: 100%;
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface3);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .range-select-trigger:hover, .range-select.open .range-select-trigger {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  .range-select-trigger svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 0.2s ease;
+  }
+
+  .range-select.open .range-select-trigger svg { transform: rotate(180deg); }
+
+  .range-select-menu {
+    position: absolute;
+    z-index: 350;
+    top: calc(100% + 7px);
+    left: 0;
+    right: 0;
+    display: grid;
+    visibility: hidden;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface2);
+    box-shadow: 0 16px 36px rgba(0,0,0,0.32);
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+    transform-origin: top;
+    transition: opacity 0.16s ease, transform 0.16s ease, visibility 0s linear 0.18s;
+  }
+
+  .range-select.open .range-select-menu {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition-delay: 0s;
+  }
+
+  .range-select-menu button {
+    position: relative;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-mid);
+    padding: 9px 9px 9px 28px;
+    font-family: var(--app-font);
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .range-select-menu button:hover { background: var(--accent-glow); color: var(--text); }
+  .range-select-menu button.selected { color: var(--accent); font-weight: 700; }
+  .range-select-menu button.selected::before { content: '✓'; position: absolute; left: 9px; }
+
+  .time-picker-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    visibility: hidden;
+    padding: 20px;
+    background: rgba(5, 8, 16, 0);
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    transition: opacity 0.22s ease, background 0.22s ease, visibility 0s linear 0.25s;
+  }
+
+  .time-picker-backdrop.open {
+    visibility: visible;
+    background: rgba(5, 8, 16, 0.62);
+    opacity: 1;
+    transition-delay: 0s;
+  }
+
+  .time-picker-card {
+    width: min(320px, 100%);
+    padding: 22px 20px 16px;
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    background: var(--surface2);
+    color: var(--text);
+    box-shadow: 0 24px 70px rgba(0,0,0,0.38);
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+    transition: opacity 0.24s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .time-picker-backdrop.open .time-picker-card { opacity: 1; transform: translateY(0) scale(1); }
+
+  .time-picker-title {
+    margin-bottom: 14px;
+    color: var(--text-mid);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .time-picker-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr 50px;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 20px;
+  }
+
+  .time-value {
+    height: 62px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: var(--surface3);
+    color: var(--text);
+    font-family: var(--app-font);
+    font-size: 38px;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .time-value.active {
+    border-color: rgba(79,142,247,0.35);
+    background: rgba(79,142,247,0.2);
+    color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  .time-separator { font-size: 34px; line-height: 1; }
+
+  .meridiem-toggle {
+    display: grid;
+    height: 62px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+  }
+
+  .meridiem-toggle button {
+    border: 0;
+    background: transparent;
+    color: var(--text-mid);
+    font-family: var(--app-font);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .meridiem-toggle button + button { border-top: 1px solid var(--border); }
+  .meridiem-toggle button.active { background: rgba(79,142,247,0.18); color: var(--accent); }
+
+  .clock-face {
+    position: relative;
+    width: 250px;
+    height: 250px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: var(--surface3);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .clock-number {
+    position: absolute;
+    z-index: 3;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    pointer-events: none;
+  }
+
+  .clock-face.mode-changing .clock-number { animation: clockNumberIn 0.24s ease both; }
+
+  .clock-number.selected { color: white; }
+
+  .clock-hand {
+    position: absolute;
+    z-index: 1;
+    left: calc(50% - 1px);
+    top: 35px;
+    width: 2px;
+    height: 90px;
+    background: var(--accent);
+    transform-origin: 50% 100%;
+    pointer-events: none;
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.16s ease;
+  }
+
+  .clock-hand::before {
+    content: '';
+    position: absolute;
+    top: -14px;
+    left: -16px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .clock-center {
+    position: absolute;
+    z-index: 4;
+    left: 50%;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: var(--accent);
+    pointer-events: none;
+  }
+
+  @keyframes clockNumberIn {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.72); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .time-picker-backdrop, .time-picker-card, .clock-hand, .clock-number,
+    .airport-drawer-backdrop, .airport-drawer-panel, .range-select-menu { transition: none !important; animation: none !important; }
+  }
+
+  .time-picker-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .time-picker-actions button {
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--accent);
+    padding: 8px 12px;
+    font-family: var(--app-font);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .time-picker-actions button:hover { background: var(--accent-glow); }
+
   .input-wrap input { padding-right: 52px; }
   .input-wrap.has-clear input { padding-right: 36px; }
   .input-wrap.has-clear.has-action input { padding-right: 52px; }
@@ -277,7 +628,7 @@
     transform: translateY(-50%);
     margin-left: 0;
     padding: 4px 7px;
-    font-size: 10px;
+    font-size: 12px;
     line-height: 1;
   }
 
@@ -320,68 +671,212 @@
 
   select option { background: var(--surface3); }
 
-  .airport-combobox { position: relative; width: 100%; }
-
-  .airport-dropdown {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
-    max-height: 240px;
-    overflow-y: auto;
-    background: var(--surface2);
+  .airport-trigger {
+    position: relative;
+    width: 100%;
+    min-height: 49px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 11px;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    z-index: 200;
-    display: none;
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+    background: var(--surface3);
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
   }
 
-  .airport-dropdown.open { display: block; }
+  .airport-trigger:hover, .airport-trigger:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+    outline: none;
+  }
 
-  .airport-option {
+  .airport-trigger-value {
+    min-width: 0;
     display: flex;
+    align-items: baseline;
+    gap: 7px;
+    line-height: 1.25;
+  }
+
+  .airport-trigger-code {
+    flex-shrink: 0;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .airport-trigger-city {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-mid);
+    font-family: var(--app-font);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .airport-trigger svg {
+    width: 14px;
+    height: 14px;
+    align-self: center;
+    fill: none;
+    stroke: var(--text-dim);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .airport-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    visibility: hidden;
+    background: rgba(5, 8, 16, 0);
+    transition: background 0.25s ease, visibility 0s linear 0.3s;
+  }
+
+  .airport-drawer-backdrop.open {
+    visibility: visible;
+    background: rgba(5, 8, 16, 0.65);
+    transition-delay: 0s;
+  }
+
+  .airport-drawer-panel {
+    width: min(620px, 100%);
+    max-height: min(78vh, 720px);
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0 max(12px, var(--safe-bottom));
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    border-radius: 28px 28px 0 0;
+    background: var(--surface);
+    box-shadow: 0 -24px 70px rgba(0,0,0,0.38);
+    transform: translateY(105%);
+    transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .airport-drawer-backdrop.open .airport-drawer-panel { transform: translateY(0); }
+
+  .airport-drawer-handle {
+    width: 42px;
+    height: 4px;
+    margin: 0 auto 8px;
+    border-radius: 2px;
+    background: var(--border);
+  }
+
+  .airport-drawer-header {
+    display: grid;
+    grid-template-columns: 42px 1fr 42px;
+    align-items: center;
+    padding: 8px 20px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .airport-drawer-close {
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--surface2);
+    color: var(--text);
+    font-family: var(--app-font);
+    font-size: 25px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .airport-drawer-heading { text-align: center; }
+  .airport-drawer-title { color: var(--text); font-size: 16px; font-weight: 700; }
+  .airport-drawer-subtitle { margin-top: 1px; color: var(--text-dim); font-size: 10px; }
+
+  .airport-search-wrap {
+    position: relative;
+    margin: 16px 20px 10px;
+  }
+
+  .airport-search-wrap svg {
+    position: absolute;
+    z-index: 1;
+    left: 15px;
+    top: 50%;
+    width: 19px;
+    height: 19px;
+    transform: translateY(-50%);
+    fill: none;
+    stroke: var(--text-mid);
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .airport-search-wrap input {
+    padding: 13px 14px 13px 44px;
+    border-radius: 14px;
+    background: var(--surface2);
+    font-family: var(--app-font);
+    font-size: 14px;
+  }
+
+  .airport-drawer-list {
+    overflow-y: auto;
+    padding: 0 12px;
+  }
+
+  .airport-drawer-option {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 34px 1fr auto;
     align-items: center;
     gap: 10px;
-    padding: 10px 12px;
-    cursor: pointer;
-    transition: background 0.12s;
-    border-bottom: 1px solid rgba(42, 47, 69, 0.5);
-  }
-
-  .airport-option:last-child { border-bottom: none; }
-  .airport-option:hover, .airport-option.highlighted { background: rgba(79, 142, 247, 0.12); }
-
-  .airport-option-code {
-    font-family: 'Space Mono', monospace;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--accent);
-    min-width: 36px;
-  }
-
-  .airport-option-info { flex: 1; min-width: 0; }
-
-  .airport-option-city {
-    font-size: 12px;
-    font-weight: 600;
+    padding: 12px 10px;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    background: transparent;
     color: var(--text);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    text-align: left;
+    cursor: pointer;
   }
 
-  .airport-option-name {
-    font-size: 10px;
-    color: var(--text-mid);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    margin-top: 1px;
+  .airport-drawer-option:last-child { border-bottom: 0; }
+  .airport-drawer-option:hover, .airport-drawer-option:focus-visible { background: var(--accent-glow); outline: none; }
+
+  .airport-drawer-plane {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: var(--accent-glow);
+    color: var(--accent);
   }
+
+  .airport-drawer-plane svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
+
+  .airport-drawer-primary { display: block; font-size: 13px; font-weight: 700; }
+  .airport-drawer-primary code { color: var(--accent); font-family: 'Space Mono', monospace; }
+  .airport-drawer-secondary { display: block; margin-top: 2px; color: var(--text-mid); font-size: 11px; }
+  .airport-drawer-check { color: var(--success); font-size: 16px; font-weight: 700; }
 
   .airport-empty {
-    padding: 14px 12px;
+    padding: 28px 12px;
     font-size: 12px;
     color: var(--text-dim);
     text-align: center;
@@ -425,7 +920,7 @@
     color: var(--text-mid);
     cursor: pointer;
     transition: all 0.15s;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--app-font);
   }
 
   .passenger-pill:hover {
@@ -449,7 +944,7 @@
     border-radius: 20px;
     color: var(--text-dim);
     font-size: 11px;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--app-font);
     padding: 6px 12px;
     cursor: pointer;
     transition: all 0.15s;
@@ -467,6 +962,45 @@
     max-height: 220px;
     overflow-y: auto;
   }
+
+  .flight-fetch-error {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 9px 10px;
+    border: 1px solid rgba(247,84,84,0.3);
+    border-radius: var(--radius-sm);
+    background: rgba(247,84,84,0.08);
+    color: var(--red);
+    font-size: 11px;
+  }
+
+  .flight-fetch-error.show { display: flex; }
+
+  .flight-fetch-error-message {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  .flight-retry-btn {
+    flex-shrink: 0;
+    border: 1px solid rgba(247,84,84,0.4);
+    border-radius: 7px;
+    background: var(--surface2);
+    color: var(--red);
+    padding: 6px 10px;
+    font-family: var(--app-font);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .flight-retry-btn:hover { background: rgba(247,84,84,0.1); }
+  .flight-retry-btn:disabled { opacity: 0.55; cursor: wait; }
 
   .flight-item {
     display: flex;
@@ -549,7 +1083,7 @@
     flex: 1;
     padding: 14px 12px;
     border-radius: var(--radius-sm);
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--app-font);
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
@@ -626,7 +1160,7 @@
     border-radius: 20px;
     overflow: hidden;
     box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--app-font);
     color: var(--pass-text);
     position: relative;
   }
@@ -848,7 +1382,7 @@
     color: var(--text-mid);
     cursor: pointer;
     transition: all 0.15s;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--app-font);
   }
 
   .option-chip.active, .option-chip:hover {
@@ -943,11 +1477,26 @@
     padding: 4px 8px;
     cursor: pointer;
     transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
   }
 
   .random-btn:hover {
     border-color: var(--accent);
     color: var(--accent);
+  }
+
+  .random-btn svg, .btn-randomize svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
   }
 
   .class-pills {
@@ -967,7 +1516,7 @@
     cursor: pointer;
     text-align: center;
     transition: all 0.15s;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--app-font);
   }
 
   .class-pill.active, .class-pill:hover {
@@ -1010,12 +1559,23 @@
 
 <header>
   <div class="logo">
-    <div class="logo-icon">✈</div>
+    <div class="logo-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v1.2a2.6 2.6 0 0 0 0 4.6v3.2a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5v-3.2a2.6 2.6 0 0 0 0-4.6Z"></path>
+        <path d="M9 8.5v7M12.2 12h4.3M14.3 9.9 16.5 12l-2.2 2.1"></path>
+      </svg>
+    </div>
     BoardingPass Studio
   </div>
   <div style="display:flex;align-items:center;gap:8px">
     <span class="header-badge">IATA BCBP · Educational</span>
-    <button class="install-btn" id="installBtn" onclick="installApp()">⬇ Install App</button>
+    <button class="theme-toggle" id="themeToggle" type="button" onclick="toggleTheme()" aria-label="Switch to light mode" title="Switch to light mode">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"></circle>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path>
+      </svg>
+    </button>
+    <button class="install-btn" id="installBtn" onclick="installApp()">⬇ Install</button>
   </div>
 </header>
 
@@ -1061,16 +1621,19 @@
           <div class="field-group">
             <label>Booking Ref (PNR)</label>
             <div class="input-wrap">
-              <input id="bookRefEd" type="text" value="XYZ123" oninput="format()" maxlength="7">
-              <button class="random-btn" type="button" onclick="randomPNR()" aria-label="Random PNR">⟳ Random</button>
+              <input id="bookRefEd" type="text" value="" oninput="format()" maxlength="7">
+              <button class="random-btn" type="button" onclick="randomPNR()" aria-label="Generate random PNR">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"></rect><circle cx="9" cy="9" r="1"></circle><circle cx="15" cy="9" r="1"></circle><circle cx="9" cy="15" r="1"></circle><circle cx="15" cy="15" r="1"></circle></svg>
+                Random
+              </button>
             </div>
           </div>
           <div class="field-group">
             <label>Travel Class</label>
             <div class="class-pills">
+              <div class="class-pill active" onclick="setClass('Y', this)">Eco</div>
               <div class="class-pill" onclick="setClass('F', this)">First</div>
               <div class="class-pill" onclick="setClass('C', this)">Biz</div>
-              <div class="class-pill active" onclick="setClass('Y', this)">Eco</div>
             </div>
           </div>
         </div>
@@ -1085,23 +1648,31 @@
     <div>
       <div class="section-label"><span class="step-tag">3</span> Flight Details</div>
       <div class="card">
-        <div class="form-row form-row-flex" style="align-items:end">
+        <div class="form-row form-row-flex" style="align-items:end;gap: 2px;">
           <div class="field-group">
             <label>From (IATA)</label>
-            <div class="airport-combobox" id="fromCombo">
-              <input id="fromEd" type="text" value="BOM" autocomplete="off" placeholder="Search airport…">
-              <div class="airport-dropdown" id="fromDropdown"></div>
-            </div>
+            <input id="fromEd" type="hidden" value="BOM">
+            <button class="airport-trigger" id="fromTrigger" type="button" onclick="openAirportDrawer('from')" aria-haspopup="dialog" aria-controls="airportDrawer">
+              <span class="airport-trigger-value">
+                <span class="airport-trigger-code" id="fromTriggerCode">BOM</span>
+                <span class="airport-trigger-city" id="fromTriggerCity">Mumbai, India</span>
+              </span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+            </button>
           </div>
           <div class="route-divider" style="margin-bottom:10px">
             <div class="route-arrow">→</div>
           </div>
           <div class="field-group">
             <label>To (IATA)</label>
-            <div class="airport-combobox" id="toCombo">
-              <input id="toEd" type="text" value="DEL" autocomplete="off" placeholder="Search airport…">
-              <div class="airport-dropdown" id="toDropdown"></div>
-            </div>
+            <input id="toEd" type="hidden" value="DEL">
+            <button class="airport-trigger" id="toTrigger" type="button" onclick="openAirportDrawer('to')" aria-haspopup="dialog" aria-controls="airportDrawer">
+              <span class="airport-trigger-value">
+                <span class="airport-trigger-code" id="toTriggerCode">DEL</span>
+                <span class="airport-trigger-city" id="toTriggerCity">Delhi, India</span>
+              </span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+            </button>
           </div>
         </div>
         <div class="form-row">
@@ -1117,19 +1688,52 @@
         <div class="form-row form-row-flex">
           <div class="field-group">
             <label>Date</label>
-            <input id="dateEd" type="date" oninput="format()">
+            <input id="dateEd" type="date" oninput="onFlightFilterChange()">
           </div>
           <div class="field-group">
             <label>Seat</label>
             <div class="input-wrap">
               <input id="seatNumEd" type="text" value="14A" oninput="format()" maxlength="4">
-              <button class="random-btn" type="button" onclick="randomSeat()" aria-label="Random seat">⟳ Random</button>
+              <button class="random-btn" type="button" onclick="randomSeat()" aria-label="Assign random seat">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"></rect><circle cx="9" cy="9" r="1"></circle><circle cx="15" cy="9" r="1"></circle><circle cx="9" cy="15" r="1"></circle><circle cx="15" cy="15" r="1"></circle></svg>
+                Random
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="form-row form-row-flex">
+          <div class="field-group">
+            <label>Depart After</label>
+            <div class="time-input-wrap">
+              <input id="flightTimeEd" type="text" readonly onclick="openTimePicker()" onkeydown="onTimeInputKeydown(event)" aria-haspopup="dialog" aria-controls="timePickerDialog">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 7v5l3 2"></path></svg>
+            </div>
+          </div>
+          <div class="field-group">
+            <label>Time Range</label>
+            <input id="flightRangeEd" type="hidden" value="4">
+            <div class="range-select" id="flightRangeSelect">
+              <button class="range-select-trigger" id="flightRangeButton" type="button" onclick="toggleFlightRangeMenu(event)" aria-haspopup="listbox" aria-expanded="false">
+                <span id="flightRangeLabel">Next 4 hours</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+              </button>
+              <div class="range-select-menu" id="flightRangeMenu" role="listbox" aria-label="Flight time range">
+                <button type="button" role="option" data-value="1" onclick="selectFlightRange(1)">Next 1 hour</button>
+                <button type="button" role="option" data-value="2" onclick="selectFlightRange(2)">Next 2 hours</button>
+                <button class="selected" type="button" role="option" aria-selected="true" data-value="4" onclick="selectFlightRange(4)">Next 4 hours</button>
+                <button type="button" role="option" data-value="6" onclick="selectFlightRange(6)">Next 6 hours</button>
+                <button type="button" role="option" data-value="12" onclick="selectFlightRange(12)">Next 12 hours</button>
+              </div>
             </div>
           </div>
         </div>
 
         <div id="flightSuggestions" style="display:none; margin-top:4px">
-          <div class="section-label" style="margin-bottom:8px">✦ Suggested flights · departing in 1–4 hrs</div>
+          <div class="section-label" id="flightSuggestionsLabel" style="margin-bottom:8px">✦ Suggested flights · departing in 1–4 hrs</div>
+          <div class="flight-fetch-error" id="flightFetchError" role="alert">
+            <span class="flight-fetch-error-message" id="flightFetchErrorMessage"></span>
+            <button class="flight-retry-btn" id="flightRetryBtn" type="button" onclick="retryFlightSuggestions()">↻ Retry</button>
+          </div>
           <div class="flight-list" id="flightList"></div>
         </div>
       </div>
@@ -1143,17 +1747,18 @@
       <button class="btn btn-primary" onclick="generateAll()">
         <span>✦</span> Generate Pass
       </button>
-      <button class="btn btn-ghost" onclick="randomizeAll()">
-        ⟳ Randomize
+      <button class="btn btn-ghost btn-randomize" onclick="randomizeAll()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"></rect><circle cx="9" cy="9" r="1"></circle><circle cx="15" cy="9" r="1"></circle><circle cx="9" cy="15" r="1"></circle><circle cx="15" cy="15" r="1"></circle></svg>
+        Randomize
       </button>
     </div>
 
     <div>
       <div class="section-label">Barcode Format</div>
       <div class="options-row">
+        <div class="option-chip active" id="chip-qr" onclick="setBarcodeType('QR', this)">⊞ QR Code</div>
         <div class="option-chip" id="chip-code128" onclick="setBarcodeType('CODE128', this)">▦ CODE128</div>
         <div class="option-chip" id="chip-pdf417" onclick="setBarcodeType('PDF417', this)">▤ PDF417-style</div>
-        <div class="option-chip active" id="chip-qr" onclick="setBarcodeType('QR', this)">⊞ QR Code</div>
       </div>
     </div>
 
@@ -1226,7 +1831,7 @@
             </div>
             <div class="pass-field">
               <div class="pass-field-label">PNR</div>
-              <div class="pass-field-value" id="passPNR">XYZ123</div>
+              <div class="pass-field-value" id="passPNR">------</div>
             </div>
             <div class="pass-field">
               <div class="pass-field-label">Seq No.</div>
@@ -1255,6 +1860,49 @@
   </div>
 </div>
 
+<div class="airport-drawer-backdrop" id="airportDrawer" role="dialog" aria-modal="true" aria-labelledby="airportDrawerTitle" onclick="onAirportDrawerBackdrop(event)">
+  <div class="airport-drawer-panel">
+    <div class="airport-drawer-handle" aria-hidden="true"></div>
+    <div class="airport-drawer-header">
+      <button class="airport-drawer-close" type="button" onclick="closeAirportDrawer()" aria-label="Close airport picker">×</button>
+      <div class="airport-drawer-heading">
+        <div class="airport-drawer-title" id="airportDrawerTitle">Select airport</div>
+        <div class="airport-drawer-subtitle">Domestic airports</div>
+      </div>
+      <div class="airport-drawer-spacer"></div>
+    </div>
+    <div class="airport-search-wrap">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
+      <input id="airportSearchInput" type="search" autocomplete="off" placeholder="Search for a city or airport" oninput="renderAirportDrawerList(this.value)">
+    </div>
+    <div class="airport-drawer-list" id="airportDrawerList"></div>
+  </div>
+</div>
+
+<div class="time-picker-backdrop" id="timePickerDialog" role="dialog" aria-modal="true" aria-labelledby="timePickerTitle" onclick="onTimePickerBackdrop(event)">
+  <div class="time-picker-card">
+    <div class="time-picker-title" id="timePickerTitle">Select departure time</div>
+    <div class="time-picker-header">
+      <button class="time-value active" id="timePickerHour" type="button" onclick="setTimePickerMode('hour')">08</button>
+      <span class="time-separator">:</span>
+      <button class="time-value" id="timePickerMinute" type="button" onclick="setTimePickerMode('minute')">00</button>
+      <div class="meridiem-toggle">
+        <button id="timePickerAM" type="button" onclick="setTimePickerMeridiem('AM')">AM</button>
+        <button id="timePickerPM" type="button" onclick="setTimePickerMeridiem('PM')">PM</button>
+      </div>
+    </div>
+    <div class="clock-face" id="timePickerClock" role="slider" tabindex="0" aria-label="Clock value" onclick="selectClockPosition(event)" onkeydown="onClockKeydown(event)">
+      <div class="clock-hand" id="timePickerHand"><span></span></div>
+      <div id="timePickerNumbers"></div>
+      <div class="clock-center"></div>
+    </div>
+    <div class="time-picker-actions">
+      <button type="button" onclick="closeTimePicker()">Cancel</button>
+      <button type="button" onclick="confirmTimePicker()">OK</button>
+    </div>
+  </div>
+</div>
+
 <script>
 "use strict";
 
@@ -1265,6 +1913,41 @@ const BARCODE_OPTS = {
   CODE128: { width: 1.8, height: 60, lineColor: '#1a1a6e', label: 'CODE128' },
   PDF417:  { width: 1.3, height: 56, lineColor: '#1a1a2e', label: 'PDF417-style' }
 };
+const THEME_STORAGE_KEY = 'bps_theme';
+
+function getPreferredTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    if (saved === 'light' || saved === 'dark') return saved;
+  } catch {}
+  return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
+function applyTheme(theme) {
+  const isLight = theme === 'light';
+  document.documentElement.dataset.theme = theme;
+  const toggle = $('themeToggle');
+  if (toggle) {
+    toggle.innerHTML = isLight
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20.5 14.1A8.5 8.5 0 0 1 9.9 3.5 8.5 8.5 0 1 0 20.5 14.1Z"></path>
+        </svg>`
+      : `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path>
+        </svg>`;
+    toggle.setAttribute('aria-label', `Switch to ${isLight ? 'dark' : 'light'} mode`);
+    toggle.title = `Switch to ${isLight ? 'dark' : 'light'} mode`;
+  }
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', isLight ? '#ffffff' : '#0a0b0f');
+}
+
+function toggleTheme() {
+  const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+  applyTheme(next);
+  try { localStorage.setItem(THEME_STORAGE_KEY, next); } catch {}
+  setupPWA();
+}
 
 function ensureLink(id, rel) {
   let el = document.getElementById(id);
@@ -1279,13 +1962,16 @@ function ensureLink(id, rel) {
 
 function setupPWA() {
   try {
+    const isLight = document.documentElement.dataset.theme === 'light';
+    const appBackground = isLight ? '#ffffff' : '#0a0b0f';
     const iconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
-      <rect width="192" height="192" rx="40" fill="#0a0b0f"/>
+      <rect width="192" height="192" rx="40" fill="${appBackground}"/>
       <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0" stop-color="#4f8ef7"/><stop offset="1" stop-color="#7b61ff"/>
       </linearGradient></defs>
-      <circle cx="96" cy="96" r="64" fill="url(#g)"/>
-      <text x="96" y="116" font-size="64" text-anchor="middle" fill="white" font-family="sans-serif">✈</text>
+      <rect x="28" y="40" width="136" height="112" rx="26" fill="url(#g)"/>
+      <path d="M54 69c0-8 7-15 15-15h54c8 0 15 7 15 15v7c-8 4-8 18 0 22v25c0 8-7 15-15 15H69c-8 0-15-7-15-15V98c8-4 8-18 0-22V69Z" fill="none" stroke="white" stroke-width="8" stroke-linejoin="round"/>
+      <path d="M84 75v42M101 96h24M114 84l12 12-12 12" fill="none" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>`;
     const iconDataUrl = 'data:image/svg+xml,' + encodeURIComponent(iconSVG);
     ensureLink('appleIcon', 'apple-touch-icon').href = iconDataUrl;
@@ -1293,7 +1979,7 @@ function setupPWA() {
       name: 'BoardingPass Studio', short_name: 'BoardingPass',
       description: 'Generate IATA BCBP boarding pass barcodes',
       start_url: location.href.split('?')[0], display: 'standalone',
-      background_color: '#0a0b0f', theme_color: '#0a0b0f',
+      background_color: appBackground, theme_color: appBackground,
       icons: [{ src: iconDataUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' }]
     };
     ensureLink('manifestLink', 'manifest').href =
@@ -1365,6 +2051,7 @@ const airports = [
   { code: 'IXM', city: 'Madurai', name: 'Madurai Airport', lat: 9.8345, lng: 78.0934 },
   { code: 'IXE', city: 'Mangalore', name: 'Mangalore International', lat: 12.9613, lng: 74.8900 },
   { code: 'NAG', city: 'Nagpur', name: 'Dr. Babasaheb Ambedkar Intl', lat: 21.0922, lng: 79.0472 },
+  { code: 'NMI', city: 'Navi Mumbai', name: 'Navi Mumbai International Airport', lat: 18.9940, lng: 73.0700 },
   { code: 'PAT', city: 'Patna', name: 'Jay Prakash Narayan Airport', lat: 25.5913, lng: 85.0879 },
   { code: 'PBD', city: 'Porbandar', name: 'Porbandar Airport', lat: 21.6486, lng: 69.6573 },
   { code: 'IXZ', city: 'Port Blair', name: 'Veer Savarkar Intl', lat: 11.6411, lng: 92.7297 },
@@ -1384,7 +2071,9 @@ const airports = [
 ];
 
 const cityNames = Object.fromEntries(airports.map(a => [a.code, a.city]));
-const airportCodes = new Set(airports.map(a => a.code));
+// The airport catalog is deliberately domestic-only. Flight suggestions must
+// resolve to one of these codes so international destinations never appear.
+const domesticAirportCodes = new Set(airports.map(a => a.code));
 const airlineNames = {
   AI: 'AIR INDIA', UK: 'VISTARA', SG: 'SPICEJET', '6E': 'INDIGO', G8: 'GO FIRST',
   IX: 'AIR INDIA EXPRESS', IXE: 'AIR INDIA EXPRESS', QP: 'AKASA AIR'
@@ -1450,112 +2139,289 @@ function filterAirports(query) {
   );
 }
 
-function renderAirportOptions(dropdown, list, highlightIdx) {
-  if (!list.length) {
-    dropdown.innerHTML = '<div class="airport-empty">No airports found</div>';
-    return;
+let airportDrawerField = 'from';
+let airportDrawerReturnFocus = null;
+
+function updateAirportTriggers() {
+  for (const field of ['from', 'to']) {
+    const code = $(`${field}Ed`).value;
+    const airport = airports.find(item => item.code === code);
+    $(`${field}TriggerCode`).textContent = code || '---';
+    $(`${field}TriggerCity`).textContent = airport ? `${airport.city}, India` : 'Select airport';
+    $(`${field}Trigger`).setAttribute('aria-label', airport
+      ? `${field === 'from' ? 'From' : 'To'} ${airport.code}, ${airport.city}, India`
+      : `Select ${field === 'from' ? 'departure' : 'arrival'} airport`);
   }
-  dropdown.innerHTML = list.map((a, i) =>
-    `<div class="airport-option${i === highlightIdx ? ' highlighted' : ''}" data-code="${a.code}">
-      <div class="airport-option-code">${a.code}</div>
-      <div class="airport-option-info">
-        <div class="airport-option-city">${a.city}</div>
-        <div class="airport-option-name">${a.name}</div>
-      </div>
-    </div>`
-  ).join('');
 }
 
-function initAirportCombobox(inputId, dropdownId, onChange) {
-  const input = $(inputId);
-  const dropdown = $(dropdownId);
-  let highlightIdx = 0;
-  let suppressBlur = false;
+function openAirportDrawer(field) {
+  airportDrawerField = field === 'to' ? 'to' : 'from';
+  airportDrawerReturnFocus = document.activeElement;
+  $('airportDrawerTitle').textContent = airportDrawerField === 'from'
+    ? 'Select departure airport'
+    : 'Select arrival airport';
+  $('airportSearchInput').value = '';
+  renderAirportDrawerList('');
+  $('airportDrawer').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => $('airportSearchInput').focus(), 220);
+}
 
-  function openDropdown() {
-    const list = filterAirports(input.value);
-    highlightIdx = 0;
-    renderAirportOptions(dropdown, list, highlightIdx);
-    dropdown.classList.add('open');
+function closeAirportDrawer() {
+  $('airportDrawer').classList.remove('open');
+  document.body.style.overflow = '';
+  airportDrawerReturnFocus?.focus();
+}
+
+function onAirportDrawerBackdrop(event) {
+  if (event.target === $('airportDrawer')) closeAirportDrawer();
+}
+
+function renderAirportDrawerList(query) {
+  const list = filterAirports(query);
+  const selectedCode = $(`${airportDrawerField}Ed`).value;
+  const container = $('airportDrawerList');
+  if (!list.length) {
+    container.innerHTML = '<div class="airport-empty">No domestic airports found</div>';
+    return;
   }
+  container.innerHTML = list.map(airport => `
+    <button class="airport-drawer-option" type="button" data-code="${airport.code}" onclick="selectAirportFromDrawer('${airport.code}')">
+      <span class="airport-drawer-plane" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="m2.5 15.5 7.2-2.9 3.7-8.3c.3-.7 1-1.2 1.8-1.2h.4c.8 0 1.3.8 1 1.5l-2.1 7 5.1-1.9c1.1-.4 2.2.2 2.6 1.2.3.9-.1 1.9-1 2.4l-7.3 3.5-7.5 3.6-2.2-.9 5.1-4.3-3.4 1.1-3.4-.8Z"></path></svg>
+      </span>
+      <span>
+        <span class="airport-drawer-primary"><code>${airport.code}</code>, ${airport.city}, India</span>
+        <span class="airport-drawer-secondary">${airport.name}</span>
+      </span>
+      <span class="airport-drawer-check">${airport.code === selectedCode ? '✓' : ''}</span>
+    </button>
+  `).join('');
+}
 
-  function closeDropdown() {
-    dropdown.classList.remove('open');
-  }
-
-  function selectCode(code) {
-    input.value = code;
-    closeDropdown();
-    onChange?.(code);
-    format();
-  }
-
-  function commitTypedValue() {
-    const code = input.value.toUpperCase().trim().slice(0, 3);
-    const match = airports.find(a => a.code === code);
-    if (match) {
-      input.value = match.code;
-      onChange?.(match.code);
-    }
-    format();
-  }
-
-  input.addEventListener('focus', openDropdown);
-  input.addEventListener('click', openDropdown);
-  input.addEventListener('input', openDropdown);
-  input.addEventListener('blur', () => {
-    if (suppressBlur) return;
-    setTimeout(() => {
-      closeDropdown();
-      commitTypedValue();
-    }, 150);
-  });
-  input.addEventListener('keydown', e => {
-    const options = dropdown.querySelectorAll('.airport-option');
-    if (!dropdown.classList.contains('open')) {
-      if (e.key === 'ArrowDown' || e.key === 'Enter') openDropdown();
-      return;
-    }
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      highlightIdx = Math.min(highlightIdx + 1, options.length - 1);
-      options.forEach((o, i) => o.classList.toggle('highlighted', i === highlightIdx));
-      options[highlightIdx]?.scrollIntoView({ block: 'nearest' });
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      highlightIdx = Math.max(highlightIdx - 1, 0);
-      options.forEach((o, i) => o.classList.toggle('highlighted', i === highlightIdx));
-      options[highlightIdx]?.scrollIntoView({ block: 'nearest' });
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      const opt = options[highlightIdx];
-      if (opt) selectCode(opt.dataset.code);
-      else commitTypedValue();
-      closeDropdown();
-    } else if (e.key === 'Escape') {
-      closeDropdown();
-    }
-  });
-
-  dropdown.addEventListener('mousedown', e => {
-    suppressBlur = true;
-    const opt = e.target.closest('.airport-option');
-    if (opt) selectCode(opt.dataset.code);
-    setTimeout(() => { suppressBlur = false; }, 0);
-  });
-
-  document.addEventListener('click', e => {
-    if (!input.contains(e.target) && !dropdown.contains(e.target)) closeDropdown();
-  });
+function selectAirportFromDrawer(code) {
+  const airport = airports.find(item => item.code === code);
+  if (!airport) return;
+  $(`${airportDrawerField}Ed`).value = code;
+  updateAirportTriggers();
+  if (airportDrawerField === 'from') onFromAirportChange(code);
+  else onToAirportChange(code);
+  format();
+  closeAirportDrawer();
 }
 
 let fromAirportCode = 'BOM';
+let toAirportCode = 'DEL';
+let flightReloadTimer = null;
 
 function onFromAirportChange(code) {
   if (code === fromAirportCode) return;
   fromAirportCode = code;
-  $('fromEd').classList.remove('auto-filled');
-  loadFlightSuggestions(code);
+  scheduleFlightSuggestionsReload();
+}
+
+function onToAirportChange(code) {
+  if (code === toAirportCode) return;
+  toAirportCode = code;
+  scheduleFlightSuggestionsReload();
+}
+
+function scheduleFlightSuggestionsReload() {
+  clearTimeout(flightReloadTimer);
+  flightReloadTimer = setTimeout(() => {
+    if (domesticAirportCodes.has(fromAirportCode) && domesticAirportCodes.has(toAirportCode)) {
+      loadFlightSuggestions(fromAirportCode, toAirportCode);
+    }
+  }, 250);
+}
+
+const FLIGHT_RANGE_LABELS = {
+  1: 'Next 1 hour', 2: 'Next 2 hours', 4: 'Next 4 hours',
+  6: 'Next 6 hours', 12: 'Next 12 hours'
+};
+
+function toggleFlightRangeMenu(event) {
+  event.stopPropagation();
+  const select = $('flightRangeSelect');
+  const willOpen = !select.classList.contains('open');
+  select.classList.toggle('open', willOpen);
+  $('flightRangeButton').setAttribute('aria-expanded', String(willOpen));
+  if (willOpen) {
+    $('flightRangeButton').scrollIntoView({ block: 'center', behavior: 'smooth' });
+    select.querySelector('.range-select-menu button.selected')?.focus();
+  }
+}
+
+function closeFlightRangeMenu() {
+  $('flightRangeSelect').classList.remove('open');
+  $('flightRangeButton').setAttribute('aria-expanded', 'false');
+}
+
+function selectFlightRange(value) {
+  const range = Number(value);
+  $('flightRangeEd').value = String(range);
+  $('flightRangeLabel').textContent = FLIGHT_RANGE_LABELS[range];
+  $('flightRangeMenu').querySelectorAll('button').forEach(button => {
+    const selected = Number(button.dataset.value) === range;
+    button.classList.toggle('selected', selected);
+    button.setAttribute('aria-selected', String(selected));
+  });
+  closeFlightRangeMenu();
+  $('flightRangeButton').focus();
+  onFlightFilterChange();
+}
+
+document.addEventListener('click', event => {
+  if (!$('flightRangeSelect')?.contains(event.target)) closeFlightRangeMenu();
+});
+
+let timePickerHourValue = 8;
+let timePickerMinuteValue = 0;
+let timePickerMode = 'hour';
+let timePickerReturnFocus = null;
+let timePickerAnimationTimer = null;
+
+function onTimeInputKeydown(event) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    openTimePicker();
+  }
+}
+
+function openTimePicker() {
+  const [hour, minute] = $('flightTimeEd').value.split(':').map(Number);
+  timePickerHourValue = Number.isFinite(hour) ? Math.min(23, Math.max(0, hour)) : 8;
+  timePickerMinuteValue = Number.isFinite(minute) ? Math.min(59, Math.max(0, minute)) : 0;
+  timePickerMode = 'hour';
+  timePickerReturnFocus = document.activeElement;
+  renderTimePicker();
+  $('timePickerDialog').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  $('timePickerHour').focus();
+}
+
+function closeTimePicker() {
+  $('timePickerDialog').classList.remove('open');
+  document.body.style.overflow = '';
+  timePickerReturnFocus?.focus();
+}
+
+function onTimePickerBackdrop(event) {
+  if (event.target === $('timePickerDialog')) closeTimePicker();
+}
+
+function setTimePickerMode(mode) {
+  const nextMode = mode === 'minute' ? 'minute' : 'hour';
+  if (nextMode === timePickerMode) {
+    $('timePickerClock').focus();
+    return;
+  }
+  const clock = $('timePickerClock');
+  clearTimeout(timePickerAnimationTimer);
+  clock.classList.remove('mode-changing');
+  void clock.offsetWidth;
+  timePickerMode = nextMode;
+  clock.classList.add('mode-changing');
+  renderTimePicker();
+  clock.focus();
+  timePickerAnimationTimer = setTimeout(() => clock.classList.remove('mode-changing'), 280);
+}
+
+function setTimePickerMeridiem(meridiem) {
+  if (meridiem === 'AM' && timePickerHourValue >= 12) timePickerHourValue -= 12;
+  if (meridiem === 'PM' && timePickerHourValue < 12) timePickerHourValue += 12;
+  renderTimePicker();
+}
+
+function renderTimePicker() {
+  const displayHour = timePickerHourValue % 12 || 12;
+  $('timePickerHour').textContent = String(displayHour).padStart(2, '0');
+  $('timePickerMinute').textContent = String(timePickerMinuteValue).padStart(2, '0');
+  $('timePickerHour').classList.toggle('active', timePickerMode === 'hour');
+  $('timePickerMinute').classList.toggle('active', timePickerMode === 'minute');
+  $('timePickerAM').classList.toggle('active', timePickerHourValue < 12);
+  $('timePickerPM').classList.toggle('active', timePickerHourValue >= 12);
+
+  const values = timePickerMode === 'hour'
+    ? Array.from({ length: 12 }, (_, i) => i + 1)
+    : Array.from({ length: 12 }, (_, i) => i * 5);
+  const selectedValue = timePickerMode === 'hour' ? displayHour : timePickerMinuteValue;
+  $('timePickerNumbers').innerHTML = values.map(value => {
+    const angle = (timePickerMode === 'hour' ? value % 12 * 30 : value * 6) * Math.PI / 180;
+    const left = 50 + Math.sin(angle) * 39;
+    const top = 50 - Math.cos(angle) * 39;
+    const label = timePickerMode === 'minute' ? String(value).padStart(2, '0') : value;
+    return `<span class="clock-number${value === selectedValue ? ' selected' : ''}" style="left:${left}%;top:${top}%">${label}</span>`;
+  }).join('');
+
+  const handAngle = timePickerMode === 'hour'
+    ? (displayHour % 12) * 30
+    : timePickerMinuteValue * 6;
+  $('timePickerHand').style.transform = `rotate(${handAngle}deg)`;
+  const clock = $('timePickerClock');
+  clock.setAttribute('aria-valuemin', timePickerMode === 'hour' ? '1' : '0');
+  clock.setAttribute('aria-valuemax', timePickerMode === 'hour' ? '12' : '59');
+  clock.setAttribute('aria-valuenow', String(selectedValue));
+  clock.setAttribute('aria-valuetext', timePickerMode === 'hour'
+    ? `${displayHour} ${timePickerHourValue < 12 ? 'AM' : 'PM'}`
+    : `${timePickerMinuteValue} minutes`);
+}
+
+function selectClockPosition(event) {
+  const rect = $('timePickerClock').getBoundingClientRect();
+  const x = event.clientX - rect.left - rect.width / 2;
+  const y = event.clientY - rect.top - rect.height / 2;
+  if (Math.hypot(x, y) < 28) return;
+  const degrees = (Math.atan2(x, -y) * 180 / Math.PI + 360) % 360;
+
+  if (timePickerMode === 'hour') {
+    const hour = Math.round(degrees / 30) % 12 || 12;
+    timePickerHourValue = hour % 12 + (timePickerHourValue >= 12 ? 12 : 0);
+    renderTimePicker();
+    setTimeout(() => setTimePickerMode('minute'), 120);
+  } else {
+    timePickerMinuteValue = Math.round(degrees / 6) % 60;
+    renderTimePicker();
+  }
+}
+
+function onClockKeydown(event) {
+  const direction = event.key === 'ArrowUp' || event.key === 'ArrowRight' ? 1
+    : event.key === 'ArrowDown' || event.key === 'ArrowLeft' ? -1 : 0;
+  if (!direction) return;
+  event.preventDefault();
+  if (timePickerMode === 'hour') {
+    timePickerHourValue = (timePickerHourValue + direction + 24) % 24;
+  } else {
+    timePickerMinuteValue = (timePickerMinuteValue + direction + 60) % 60;
+  }
+  renderTimePicker();
+}
+
+function confirmTimePicker() {
+  $('flightTimeEd').value =
+    String(timePickerHourValue).padStart(2, '0') + ':' +
+    String(timePickerMinuteValue).padStart(2, '0');
+  closeTimePicker();
+  onFlightFilterChange();
+}
+
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && $('timePickerDialog')?.classList.contains('open')) {
+    closeTimePicker();
+  } else if (event.key === 'Escape' && $('airportDrawer')?.classList.contains('open')) {
+    closeAirportDrawer();
+  } else if (event.key === 'Escape' && $('flightRangeSelect')?.classList.contains('open')) {
+    closeFlightRangeMenu();
+    $('flightRangeButton').focus();
+  }
+});
+
+function onFlightFilterChange() {
+  format();
+  if ($('dateEd').value && $('flightTimeEd').value) {
+    scheduleFlightSuggestionsReload();
+  }
 }
 
 const fields = {};
@@ -1819,8 +2685,8 @@ async function reverseGeocode(lat, lng) {
 function applyAirport(airport, dist, isFallback, geoLabel) {
   const fromInput = $('fromEd');
   fromInput.value = airport.code;
-  fromInput.classList.add('auto-filled');
   fromAirportCode = airport.code;
+  updateAirportTriggers();
   const title = geoLabel || (airport.city + ' — ' + airport.code);
   $('locTitle').textContent = title + (isFallback ? ' (estimated)' : '');
   $('locSub').textContent = isFallback ? airport.name : airport.name + ' (' + dist + ' km)';
@@ -1829,7 +2695,7 @@ function applyAirport(airport, dist, isFallback, geoLabel) {
   reBtn.classList.add('show');
   reBtn.disabled = false;
   reBtn.innerHTML = '⟳ Re-detect';
-  loadFlightSuggestions(airport.code);
+  loadFlightSuggestions(airport.code, toAirportCode);
   format();
 }
 
@@ -1878,26 +2744,56 @@ function detectLocation() {
   );
 }
 
-function getISTParts() {
+function getISTParts(timestamp = Date.now()) {
   const parts = new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Asia/Kolkata',
     year: 'numeric', month: 'numeric', day: 'numeric',
-    hour: 'numeric', hour12: false
-  }).formatToParts(new Date());
+    hour: 'numeric', minute: 'numeric', hour12: false
+  }).formatToParts(new Date(timestamp));
   const get = t => +parts.find(p => p.type === t).value;
-  return { year: get('year'), month: get('month'), day: get('day'), hour: get('hour') };
+  return {
+    year: get('year'), month: get('month'), day: get('day'),
+    hour: get('hour') % 24, minute: get('minute')
+  };
 }
 
-function flightStatsHourBlocks(hour) {
-  const block = Math.floor(hour / 6) * 6;
-  const blocks = [block];
-  if (hour + 4 > block + 6 && block + 6 < 24) blocks.push(block + 6);
-  return blocks;
+function getFlightSearchWindow() {
+  const date = $('dateEd').value;
+  const time = $('flightTimeEd').value;
+  const rangeHours = Number($('flightRangeEd').value);
+  if (!date || !time || !Number.isFinite(rangeHours)) return null;
+
+  const startTime = new Date(`${date}T${time}:00+05:30`).getTime();
+  if (!Number.isFinite(startTime)) return null;
+  return { startTime, endTime: startTime + rangeHours * 3600000, rangeHours };
+}
+
+function flightStatsRequestBlocks(startTime, endTime) {
+  const requests = new Map();
+  const addBlock = timestamp => {
+    const { year, month, day, hour } = getISTParts(timestamp);
+    const startHour = Math.floor(hour / 6) * 6;
+    const key = `${year}-${month}-${day}-${startHour}`;
+    requests.set(key, { year, month, day, startHour });
+  };
+
+  for (let cursor = startTime; cursor <= endTime; cursor += 6 * 3600000) addBlock(cursor);
+  addBlock(endTime);
+  return [...requests.values()];
+}
+
+function fmtISTTime(timestamp) {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false
+  }).format(new Date(timestamp));
 }
 
 const CORS_PROXIES = [
   // url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
-  url => 'https://corsproxy.io/?url=' + encodeURIComponent(url),
+  // url => 'https://corsproxy.io/?url=' + encodeURIComponent(url),
+  url => 'https://corsproxy.io/?key=54608fea&url=' + encodeURIComponent(url),
+  url => 'https://api.cors.lol/?url=/?key=54608fea&url=' + encodeURIComponent(url),
+  url => 'https://proxy.killcors.com?url=' + encodeURIComponent(url),
 ];
 
 async function fetchFlightStatsJson(url) {
@@ -1927,11 +2823,12 @@ function mapFlightStatsFlight(f, fromCode) {
   };
 }
 
-function pickFlights(flights, fromCode, minTime, windowEnd) {
+function pickFlights(flights, fromCode, toCode, minTime, windowEnd) {
   const seen = new Set();
   const eligible = flights.filter(f => {
     if (f.isCodeshare || !f.carrier?.fs || !f.airport?.fs) return false;
-    if (!airportCodes.has(f.airport.fs)) return false;
+    if (!domesticAirportCodes.has(f.airport.fs)) return false;
+    if (toCode && f.airport.fs !== toCode) return false;
     if (!airlineCodes.has(f.carrier.fs)) return false;
     const key = f.carrier.fs + f.carrier.flightNumber + f.sortTime;
     if (seen.has(key)) return false;
@@ -1944,44 +2841,42 @@ function pickFlights(flights, fromCode, minTime, windowEnd) {
     return t >= minTime && t <= windowEnd;
   });
 
-  const picks = (inWindow.length ? inWindow : eligible.filter(f => new Date(f.sortTime).getTime() >= minTime)).slice(0, 4);
-  return picks.map(f => mapFlightStatsFlight(f, fromCode));
+  return inWindow.slice(0, 10).map(f => mapFlightStatsFlight(f, fromCode));
 }
 
-function filterUpcomingFlights(flights, fromCode) {
-  const now = Date.now();
-  const minTime = now + 60 * 60000;
-  const maxTime = now + 4 * 3600000;
-  return pickFlights(flights, fromCode, minTime, maxTime);
+function filterUpcomingFlights(flights, fromCode, toCode, searchWindow) {
+  return pickFlights(flights, fromCode, toCode, searchWindow.startTime, searchWindow.endTime);
 }
 
-async function fetchFlightStatsDepartures(fromCode) {
-  const { year, month, day, hour } = getISTParts();
-  const blocks = flightStatsHourBlocks(hour);
+async function fetchFlightStatsDepartures(fromCode, toCode, searchWindow) {
+  const blocks = flightStatsRequestBlocks(searchWindow.startTime, searchWindow.endTime);
   const base = 'https://www.flightstats.com/v2/api-next/flight-tracker/dep';
   const all = [];
 
-  for (const h of blocks) {
-    const url = `${base}/${fromCode}/${year}/${month}/${day}/${h}`;
+  for (const { year, month, day, startHour } of blocks) {
+    const url = `${base}/${fromCode}/${year}/${month}/${day}/${startHour}`;
     const json = await fetchFlightStatsJson(url);
     all.push(...(json?.data?.flights || []));
   }
 
-  const upcoming = filterUpcomingFlights(all, fromCode);
+  const upcoming = filterUpcomingFlights(all, fromCode, toCode, searchWindow);
   return upcoming.length ? upcoming : null;
 }
 
-function getStaticFlights(from) {
-  const now = Date.now();
+function getStaticFlights(from, to, searchWindow) {
+  const rangeMinutes = searchWindow.rangeHours * 60;
   const timeAt = mins => {
-    const t = new Date(now + mins * 60000);
-    return fmtTime(t);
+    return fmtISTTime(searchWindow.startTime + mins * 60000);
   };
   const candidates = airports.filter(a => a.code !== from);
-  const picks = candidates.sort(() => Math.random() - 0.5).slice(0, 4);
+  const selectedDestination = candidates.find(a => a.code === to);
+  const picks = selectedDestination
+    ? Array.from({ length: 10 }, () => selectedDestination)
+    : candidates.sort(() => Math.random() - 0.5).slice(0, 10);
   const airlines = [...airlineCodes];
   return picks.map((dest, i) => {
-    const depMin = 65 + i * 25 + Math.floor(Math.random() * 25);
+    const slotMinutes = rangeMinutes / 10;
+    const depMin = Math.min(rangeMinutes - 1, Math.floor((i + 0.35) * slotMinutes));
     const dur = 70 + Math.floor(Math.random() * 90);
     return {
       airline: airlines[Math.floor(Math.random() * airlines.length)],
@@ -1991,26 +2886,65 @@ function getStaticFlights(from) {
   });
 }
 
-async function loadFlightSuggestions(fromCode) {
+let flightSuggestionsRequestId = 0;
+
+function setFlightFetchError(error) {
+  const errorBox = $('flightFetchError');
+  const message = error
+    ? String(error?.message || error || 'Unknown error')
+    : '';
+  $('flightFetchErrorMessage').textContent = message ? `Live flight error: ${message}` : '';
+  errorBox.classList.toggle('show', Boolean(message));
+}
+
+function retryFlightSuggestions() {
+  loadFlightSuggestions(fromAirportCode, toAirportCode);
+}
+
+async function loadFlightSuggestions(fromCode, toCode) {
+  const requestId = ++flightSuggestionsRequestId;
+  const routeLabel = toCode ? `${fromCode} → ${toCode}` : `from ${fromCode}`;
+  const searchWindow = getFlightSearchWindow();
+  const retryBtn = $('flightRetryBtn');
+  if (!searchWindow) {
+    retryBtn.disabled = false;
+    setFlightFetchError('Select a valid departure date and time.');
+    return;
+  }
+  const timeLabel = `${fmtISTTime(searchWindow.startTime)}–${fmtISTTime(searchWindow.endTime)}`;
+  retryBtn.disabled = true;
+  setFlightFetchError(null);
   $('flightSuggestions').style.display = 'block';
+  $('flightSuggestionsLabel').textContent = `✦ Suggested flights · ${routeLabel} · ${timeLabel} · up to 10`;
   $('flightList').innerHTML =
     '<div style="color:var(--text-dim);font-size:12px;padding:10px;text-align:center">' +
     '<span class="spinner" style="border-color:rgba(79,142,247,0.3);border-top-color:var(--accent)"></span>' +
-    '&nbsp; Loading live departures from ' + fromCode + '...</div>';
+    '&nbsp; Loading live flights for ' + routeLabel + '...</div>';
 
   if (location.protocol === 'file:') {
-    renderFlightList(getStaticFlights(fromCode));
+    renderFlightList(getStaticFlights(fromCode, toCode, searchWindow));
+    retryBtn.disabled = false;
     showStatus('info', '⚠ Live flights need HTTPS hosting — open the deployed URL, not a local file');
     return;
   }
 
   try {
-    const flights = await fetchFlightStatsDepartures(fromCode);
-    renderFlightList(flights || getStaticFlights(fromCode));
-    if (flights) showStatus('success', '✓ Live flights loaded from FlightStats');
-  } catch {
-    renderFlightList(getStaticFlights(fromCode));
-    showStatus('info', '⚠ Could not load live flights — showing estimates');
+    const flights = await fetchFlightStatsDepartures(fromCode, toCode, searchWindow);
+    if (requestId !== flightSuggestionsRequestId) return;
+    retryBtn.disabled = false;
+    renderFlightList(flights || getStaticFlights(fromCode, toCode, searchWindow));
+    if (flights) {
+      showStatus('success', `✓ Live flights loaded from FlightStats for ${routeLabel}`);
+    } else {
+      showStatus('info', `⚠ No live flights found for ${routeLabel} — showing estimates`);
+    }
+  } catch (error) {
+    if (requestId !== flightSuggestionsRequestId) return;
+    retryBtn.disabled = false;
+    renderFlightList(getStaticFlights(fromCode, toCode, searchWindow));
+    setFlightFetchError(error);
+    const message = String(error?.message || error || 'Unknown error');
+    showStatus('error', `✗ Live flight fetch failed: ${message}`);
   }
 }
 
@@ -2037,8 +2971,10 @@ function applyFlight(f, el) {
   document.querySelectorAll('.flight-item').forEach(i => i.classList.remove('selected'));
   el.classList.add('selected');
   fromAirportCode = f.from;
+  toAirportCode = f.to;
   $('fromEd').value = f.from;
   $('toEd').value = f.to;
+  updateAirportTriggers();
   $('fOpEd').value = f.airline;
   $('fNumEd').value = f.flightNum;
   $('passDep').textContent = f.dep;
@@ -2078,13 +3014,22 @@ function hideLoader() {
 }
 
 function start() {
+  applyTheme(getPreferredTheme());
   setupPWA();
-  initAirportCombobox('fromEd', 'fromDropdown', onFromAirportChange);
-  initAirportCombobox('toEd', 'toDropdown');
-  $('dateEd').value = new Date().toISOString().slice(0, 10);
-  const now = Date.now();
-  $('passDep').textContent = fmtTime(new Date(now + 90 * 60000));
-  $('passBoarding').textContent = fmtTime(new Date(now + 60 * 60000));
+  updateAirportTriggers();
+  const defaultDeparture = Date.now() + 60 * 60000;
+  const departureParts = getISTParts(defaultDeparture);
+  $('dateEd').value = [
+    departureParts.year,
+    String(departureParts.month).padStart(2, '0'),
+    String(departureParts.day).padStart(2, '0')
+  ].join('-');
+  $('flightTimeEd').value =
+    String(departureParts.hour).padStart(2, '0') + ':' +
+    String(departureParts.minute).padStart(2, '0');
+  randomPNR(true);
+  $('passDep').textContent = fmtISTTime(defaultDeparture);
+  $('passBoarding').textContent = fmtISTTime(defaultDeparture - 30 * 60000);
   renderPassengerPills();
   format();
   showStatus('info', 'Click "Detect" to find your nearest airport automatically');
